@@ -29,15 +29,36 @@ export function getUltimoSync() {
   return localStorage.getItem(KEYS.ULTIMO_SYNC) || null;
 }
 
-// Scarica tutti i dati dal Google Sheet
+// Scarica tutti i dati dal Google Sheet tramite JSONP (evita CORS)
 export async function sincronizzaDati(scriptUrl) {
-  const res = await fetch(`${scriptUrl}?since=2025-01-01`);
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error || 'Errore risposta Sheet');
-  // Ordina per data crescente
-  const rows = (json.rows || []).sort((a, b) => a.data > b.data ? 1 : -1);
-  saveDati(rows);
-  return rows;
+  return new Promise((resolve, reject) => {
+    const callbackName = 'dnm_cb_' + Date.now();
+    const script = document.createElement('script');
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout — nessuna risposta dallo script'));
+    }, 15000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[callbackName] = (data) => {
+      cleanup();
+      if (!data.ok) { reject(new Error(data.error || 'Errore risposta Sheet')); return; }
+      const rows = (data.rows || []).sort((a, b) => a.data > b.data ? 1 : -1);
+      saveDati(rows);
+      resolve(rows);
+    };
+
+    const url = `${scriptUrl}?since=2025-01-01&callback=${callbackName}`;
+    script.src = url;
+    script.onerror = () => { cleanup(); reject(new Error('Errore caricamento script')); };
+    document.head.appendChild(script);
+  });
 }
 
 // Calcola media di un campo numerico su un array di righe
