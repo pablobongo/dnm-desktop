@@ -10,9 +10,11 @@ const isWeekend = (dataStr) => {
 
 const renderEnergia = (val) => {
   if (val === null || val === undefined || val === '') return '—';
-  const n = parseInt(val);
-  if (!isNaN(n) && n > 0) return '★'.repeat(n);
-  return String(val);
+  const n = parseFloat(val);
+  if (isNaN(n) || n === 0) return '—';
+  // scala 0-1 (es. 0.9) → converte in stelle su 5
+  const stelle = n <= 1 ? Math.round(n * 5) : Math.min(5, Math.round(n));
+  return stelle > 0 ? '★'.repeat(stelle) : '—';
 };
 
 export default function StoricoPage({ dati }) {

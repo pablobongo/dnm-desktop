@@ -2,6 +2,14 @@
 import { useMemo } from 'react';
 import { ultimoValore, media, formatData, giornoSettimana, getConfig, APP_VERSION } from './store';
 
+const renderEnergia = (val) => {
+  if (val === null || val === undefined || val === '') return '—';
+  const n = parseFloat(val);
+  if (isNaN(n) || n === 0) return '—';
+  const stelle = n <= 1 ? Math.round(n * 5) : Math.min(5, Math.round(n));
+  return stelle > 0 ? '★'.repeat(stelle) : '—';
+};
+
 export default function DashboardPage({ dati }) {
   const ultimi7 = useMemo(() => dati.slice(-7), [dati]);
   const ultimi30 = useMemo(() => dati.slice(-30), [dati]);
@@ -135,12 +143,12 @@ export default function DashboardPage({ dati }) {
               {ultimi7.slice().reverse().map((r, i) => (
                 <tr key={i}>
                   <td className="td-main">{giornoSettimana(r.data)} {formatData(r.data)}</td>
-                  <td><span className={`badge badge--${r.colazione_fatta}`}>{r.colazione_fatta === 'si' ? '✓' : '✗'}</span></td>
-                  <td><span className={`badge badge--${r.post_all_fatto}`}>{r.post_all_fatto === 'si' ? '✓' : '✗'}</span></td>
-                  <td><span className={`badge badge--${r.spuntino_fatto}`}>{r.spuntino_fatto === 'si' ? '✓' : '✗'}</span></td>
-                  <td><span className={`badge badge--${r.cena_fatta}`}>{r.cena_fatta === 'si' ? '✓' : '✗'}</span></td>
+                  <td><span className={`badge badge--${r.colazione_fatta === 'si' ? 'si' : 'no'}`}>{r.colazione_fatta === 'si' ? '✓' : '✗'}</span></td>
+                  <td><span className={`badge badge--${r.post_all_fatto === 'si' ? 'si' : 'no'}`}>{r.post_all_fatto === 'si' ? '✓' : '✗'}</span></td>
+                  <td><span className={`badge badge--${r.spuntino_fatto === 'si' ? 'si' : 'no'}`}>{r.spuntino_fatto === 'si' ? '✓' : '✗'}</span></td>
+                  <td><span className={`badge badge--${r.cena_fatta === 'si' ? 'si' : 'no'}`}>{r.cena_fatta === 'si' ? '✓' : '✗'}</span></td>
                   <td className="td-main">{r.totale_kcal || '—'}</td>
-                  <td>{r.energia ? `${'★'.repeat(parseInt(r.energia))}` : '—'}</td>
+                  <td>{renderEnergia(r.energia)}</td>
                 </tr>
               ))}
             </tbody>

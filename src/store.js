@@ -8,6 +8,25 @@ const KEYS = {
   ULTIMO_SYNC: 'dnm_desktop_ultimo_sync',
 };
 
+// Converte boolean/stringa Sheet → 'si'/'no'/valore originale
+function normalizzaBool(val) {
+  if (val === true  || val === 'true'  || val === 'TRUE'  || val === '1' || val === 1) return 'si';
+  if (val === false || val === 'false' || val === 'FALSE' || val === '0' || val === 0) return 'no';
+  return val;
+}
+
+// Normalizza una riga: data ISO → YYYY-MM-DD, booleani → si/no
+function normalizzaRiga(r) {
+  return {
+    ...r,
+    data: r.data && typeof r.data === 'string' && r.data.includes('T') ? r.data.split('T')[0] : r.data,
+    colazione_fatta: normalizzaBool(r.colazione_fatta),
+    post_all_fatto:  normalizzaBool(r.post_all_fatto),
+    spuntino_fatto:  normalizzaBool(r.spuntino_fatto),
+    cena_fatta:      normalizzaBool(r.cena_fatta),
+  };
+}
+
 export function getConfig() {
   try { return JSON.parse(localStorage.getItem(KEYS.CONFIG)) || {}; }
   catch { return {}; }
@@ -18,7 +37,10 @@ export function saveConfig(c) {
 }
 
 export function getDati() {
-  try { return JSON.parse(localStorage.getItem(KEYS.DATI)) || []; }
+  try {
+    const rows = JSON.parse(localStorage.getItem(KEYS.DATI)) || [];
+    return rows.map(normalizzaRiga);
+  }
   catch { return []; }
 }
 
@@ -52,7 +74,7 @@ export async function sincronizzaDati(scriptUrl) {
       cleanup();
       if (!data.ok) { reject(new Error(data.error || 'Errore risposta Sheet')); return; }
       const rows = (data.rows || [])
-        .map(r => ({ ...r, data: r.data && typeof r.data === 'string' && r.data.includes('T') ? r.data.split('T')[0] : r.data }))
+        .map(normalizzaRiga)
         .sort((a, b) => a.data > b.data ? 1 : -1);
       saveDati(rows);
       resolve(rows);
@@ -81,16 +103,19 @@ export function ultimoValore(rows, campo) {
   return null;
 }
 
-// Formatta data YYYY-MM-DD in DD/MM/YYYY
+// Formatta data YYYY-MM-DD in DD/MM/YYYY (gestisce anche ISO per sicurezza)
 export function formatData(str) {
   if (!str) return '';
-  const [y, m, d] = str.split('-');
-  return `${d}/${m}/${y}`;
+  const s = typeof str === 'string' && str.includes('T') ? str.split('T')[0] : String(str);
+  const parts = s.split('-');
+  if (parts.length !== 3) return s;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-// Giorno settimana da data
+// Giorno settimana da data YYYY-MM-DD
 export function giornoSettimana(str) {
   if (!str) return '';
+  const s = typeof str === 'string' && str.includes('T') ? str.split('T')[0] : String(str);
   const days = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
-  return days[new Date(str + 'T12:00:00').getDay()];
+  return days[new Date(s + 'T12:00:00').getDay()];
 }
