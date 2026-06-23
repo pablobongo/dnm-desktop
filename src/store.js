@@ -1,5 +1,7 @@
 // store.js — desktop: config, cache dati da Google Sheet
 
+export const APP_VERSION = '1.0.0';
+
 const KEYS = {
   CONFIG: 'dnm_desktop_config',
   DATI:   'dnm_desktop_dati',
@@ -49,7 +51,9 @@ export async function sincronizzaDati(scriptUrl) {
     window[callbackName] = (data) => {
       cleanup();
       if (!data.ok) { reject(new Error(data.error || 'Errore risposta Sheet')); return; }
-      const rows = (data.rows || []).sort((a, b) => a.data > b.data ? 1 : -1);
+      const rows = (data.rows || [])
+        .map(r => ({ ...r, data: r.data && typeof r.data === 'string' && r.data.includes('T') ? r.data.split('T')[0] : r.data }))
+        .sort((a, b) => a.data > b.data ? 1 : -1);
       saveDati(rows);
       resolve(rows);
     };

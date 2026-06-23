@@ -27,7 +27,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar__logo">
           <div className="sidebar__logo-title">D.N.M.</div>
-          <div className="sidebar__logo-sub">DEMOSE NA REGOLADA</div>
+          <div className="sidebar__logo-sub">DEMOSE NA MOSSA</div>
           <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>Dashboard</div>
         </div>
         <nav className="sidebar__nav">

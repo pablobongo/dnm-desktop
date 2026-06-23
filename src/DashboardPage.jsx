@@ -1,14 +1,15 @@
 // DashboardPage.jsx — KPI e riepilogo
 import { useMemo } from 'react';
-import { ultimoValore, media, formatData, giornoSettimana } from './store';
+import { ultimoValore, media, formatData, giornoSettimana, getConfig, APP_VERSION } from './store';
 
 export default function DashboardPage({ dati }) {
   const ultimi7 = useMemo(() => dati.slice(-7), [dati]);
   const ultimi30 = useMemo(() => dati.slice(-30), [dati]);
 
+  const config = getConfig();
   const pesoAttuale  = ultimoValore(dati, 'peso_kg');
-  const pesoInizio   = 88; // peso partenza Igor
-  const pesoTarget   = 83; // obiettivo -5kg
+  const pesoInizio   = parseFloat(config.pesoInizio) || 88;
+  const pesoTarget   = parseFloat(config.pesoTarget) || 83;
   const pesoPerso    = pesoAttuale ? (pesoInizio - pesoAttuale).toFixed(1) : null;
   const progressoPct = pesoAttuale ? Math.min(100, Math.round(((pesoInizio - pesoAttuale) / (pesoInizio - pesoTarget)) * 100)) : 0;
 
@@ -37,7 +38,10 @@ export default function DashboardPage({ dati }) {
   return (
     <div>
       <div className="flex-between mb-24">
-        <h1 className="page-title" style={{ marginBottom: 0 }}>Dashboard</h1>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+          <h1 className="page-title" style={{ marginBottom: 0 }}>Dashboard</h1>
+          <span className="text-muted text-xs">v{APP_VERSION}</span>
+        </div>
         {ultimaData && <span className="text-muted text-sm">Ultimo dato: {ultimaData}</span>}
       </div>
 
